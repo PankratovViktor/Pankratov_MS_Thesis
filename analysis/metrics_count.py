@@ -1,7 +1,16 @@
 
 
 import numpy as np
-import metrics_definition
+from analysis.metrics_definition import simil_fun_cdist
+from analysis.metrics_definition import simil_fun_euclid
+from analysis.metrics_definition import simil_fun_hellinger
+from analysis.metrics_definition import simil_fun_jensen_shannon
+
+def pairsim(ax0,ax1):
+    ans = 0
+    for i in range(len(ax0)):
+        ans = ans + (ax1[ax0[i]] == i)
+    return ans
 
 def count_metrics_for_phi(phi_0, phi_1, simil_fun, num_topics):
     distance = np.zeros((num_topics,num_topics))
@@ -24,7 +33,7 @@ def check_metrics(phi_true, phi_test, num_topics):
     "метрики же часто просто просматриваются"
     print(count_metrics_for_phi(phi_true, phi_test, simil_fun_cdist, num_topics))
     print(count_metrics_for_phi(phi_true, phi_test, simil_fun_euclid, num_topics)) 
-    print(count_metrics_for_phi(phi_true, phi_test, simil_fun_jenson_shennon, num_topics)) 
+    print(count_metrics_for_phi(phi_true, phi_test, simil_fun_jensen_shannon, num_topics)) 
     print(count_metrics_for_phi(phi_true, phi_test, simil_fun_hellinger, num_topics))
     return 0
     
@@ -36,4 +45,3 @@ def get_metrics(phi_true, phi_test, num_topics):
     metrics.append(count_metrics_for_phi(phi_true, phi_test, simil_fun_cdist, num_topics))
     return metrics
     
-
