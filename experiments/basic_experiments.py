@@ -1,13 +1,17 @@
 import numpy as np
 import pickle
+from scipy import sparse
+
 from pyartm import regularizers
 from pyartm.optimizations import balanced
+from pyartm.common import experiments
 from pyartm.optimizations import default
 from collection import generate
 from collection import modify
 from analysis import metrics_definition
+from analysis import metrics_count
 
-ITERS_COUNT = 401
+ITERS_COUNT = 1 #Оптимальное число здесь ~ 300, число итераций работы алгоритма
 SAMPLES = 1
 
 def perform_experiment(
@@ -24,7 +28,7 @@ def perform_experiment(
     )
 
     for seed in range(samples):
-        expphi, exptheta = experiments.default_sample(train_n_dw_matrix, T, seed, optimizer, tau = tau )
+        expphi, exptheta = experiments.default_sample(train_n_dw_matrix, T, seed, optimizer, tau  )
     optimizer.iteration_callback.save_results(output_path)
     with open(path_phi_output, 'wb') as resource_file:
         pickle.dump(expphi, resource_file) 
@@ -33,39 +37,41 @@ def perform_experiment(
 def basic_experiment(data_list, tau_list, num_topics):
     "tau_list должен содержать None для сравнения с default"
     "data_list - адреса сохраненных матриц n_dw"
-    for data_addr in data_list
+    regularization_list = [regularizers.Trivial()] * ITERS_COUNT
+    for data_addr in data_list:
         with open(data_addr, 'rb') as f:
             data = pickle.load(f)
         data = sparse.csr_matrix(np.array(data)) # исходная генерация генерирует именно list
         for t in tau_list:
             perform_experiment(
                 data, None, default.Optimizer(regularization_list), 100, 
-                SAMPLES, output_path = 'exp_{}_{}.pkl'.format(tau, data_addr), tau = t, 
-                path_phi_output = 'expphi_{}_{}.pkl'.format(tau, data_addr)
+                SAMPLES, output_path = 'exp_{}_{}.pkl'.format(t, data_addr), tau = t, 
+                path_phi_output = 'expphi_{}_{}.pkl'.format(t, data_addr)
             )
 
-def full_experiment()
-    "Все числовые параметры можно менять, ппарметры здесь выбраны из разумности полученных результатов"
-    theta = generate_theta(0.1,2000,100)
-    phi = generate_phi(0.01,100,10000)
+def full_experiment():
+    "Все числовые параметры можно менять, параметры здесь выбраны из разумности полученных результатов"
+    phi = generate.generate_phi(0.01,100,10000)
+    theta = generate.generate_theta(0.1,2000,100)
     data_list = []
     for one_topic_docs in (5, 10, 12, 15):  #число документов во всех темах,кроме одной
         Dt_array = [one_topic_docs for i in range (100)]
-        Dt_array[0] = 2000 - 99 * one_topic_docs
-        theta_modified = modify_theta(theta, Dt_array, num_topics)
-        test_collection = generate_collection(2000, phi, theta, num_words_in_doc = 2000)
-        with open('collection_{}'.format(one_topic_docs), 'rb') as data_file:
-            pickle.dump(test_collection, resource_file)
+        Dt_array[0] = 2000 - (99 * one_topic_docs)
+        theta_modified = modify.modify_theta(theta, Dt_array, 2000)
+        test_collection = generate.generate_collection(2000, phi, theta, num_words_in_doc = 2000)
+        with open('collection_{}'.format(one_topic_docs), 'wb') as data_file:
+            pickle.dump(test_collection, data_file)
         data_list.append('collection_{}'.format(one_topic_docs))
-        with open('phi_{}'.format(one_topic_docs), 'rb') as phi_file:
-            pickle.dump(phi, resource_file)
-        with open('theta_{}'.format(one_topic_docs), 'rb') as theta_file:
-            pickle.dump(theta, resource_file)
-    basic_experiment(data_list, [None,1], num_topics)
+        with open('phi_{}'.format(one_topic_docs), 'wb') as phi_file:
+            pickle.dump(phi, phi_file)
+        with open('theta_{}'.format(one_topic_docs), 'wb') as theta_file:
+            pickle.dump(theta, theta_file)
+    basic_experiment(data_list, [None], 100)
     for one_topic_docs in (5, 10, 12, 15): 
         with open('phi_{}'.format(one_topic_docs), 'rb') as phi_file:
+            phi = pickle.load(phi_file)
+        with open('expphi_{}_collection_{}.pkl'.format(None,one_topic_docs), 'rb') as phi_file:
             phi_exp = pickle.load(phi_file)
         print(one_topic_docs)
-        check_metrics(phi, phi_exp, 100):
-        
+        metrics_count.check_metrics(phi, phi_exp.transpose(), 100)
         
