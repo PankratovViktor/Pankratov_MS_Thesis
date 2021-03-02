@@ -70,10 +70,9 @@ def default_callback(
 
 
 def default_sample(
-        train_n_dw_matrix, T, seed, optimizer,
+        train_n_dw_matrix, T, seed, optimizer, tau,
         init_phi_zeros=None, init_theta_zeros=None,
-        start_launch=True, finish_launch=True, tau = None
-):
+        start_launch=True, finish_launch=True
     """
     :param train_n_dw_matrix:
     :param T: number of topics
