@@ -2,9 +2,9 @@
 import numpy as np
 from scipy.stats import zipf
 
-def modify_theta(theta, Dt_array, num_topics): 
+def modify_theta(theta, Dt_array, num_docs): 
     "балансировка тем, Dt_array[i] - число документов с преобладающей темой i"
-    arr = np.arange(num_topics)
+    arr = np.arange(num_docs)
     np.random.shuffle(arr)
     current = 0
     for i in range(len(Dt_array)):
@@ -23,4 +23,3 @@ def add_general(phi, theta, num_docs, num_words, deg = 0.5):
     theta = theta * (1 - deg)
     theta = np.append(theta, (np.ones(num_docs) * deg).reshape(1, num_docs), axis = 0)
     return (phi, theta)
-
